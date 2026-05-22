@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lance — AI Creative Studio</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Command Palette Overlay -->
+  <div id="commandPalette" class="command-palette-overlay hidden">
+    <div class="command-palette">
+      <div class="command-input-wrap">
+        <svg class="command-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="commandInput" type="text" placeholder="Search commands, features…" autocomplete="off" spellcheck="false">
+        <kbd class="kbd-esc">ESC</kbd>
+      </div>
+      <div id="commandResults" class="command-results">
+        <div class="command-group">
+          <div class="command-group-label">Navigation</div>
+          <button class="command-item" data-action="tab" data-tab="generate">
+            <span class="command-item-icon">✨</span>
+            <span>Generate</span>
+            <span class="command-item-shortcut">⌘1</span>
+          </button>
+          <button class="command-item" data-action="tab" data-tab="edit">
+            <span class="command-item-icon">🖌️</span>
+            <span>Edit</span>
+            <span class="command-item-shortcut">⌘2</span>
+          </button>
+          <button class="command-item" data-action="tab" data-tab="video">
+            <span class="command-item-icon">🎬</span>
+            <span>Video</span>
+            <span class="command-item-shortcut">⌘3</span>
+          </button>
+          <button class="command-item" data-action="tab" data-tab="settings">
+            <span class="command-item-icon">⚙️</span>
+            <span>Settings</span>
+            <span class="command-item-shortcut">⌘4</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- App Shell -->
+  <div class="app">
+    <!-- Top Nav -->
+    <header class="nav">
+      <div class="nav-left">
+        <div class="logo">
+          <div class="logo-mark">L</div>
+          <span class="logo-text">Lance</span>
+        </div>
+        <nav class="nav-tabs">
+          <button class="nav-tab active" data-tab="generate">
+            <span class="nav-tab-icon">✨</span>Generate
+          </button>
+          <button class="nav-tab" data-tab="edit">
+            <span class="nav-tab-icon">🖌️</span>Edit
+          </button>
+          <button class="nav-tab" data-tab="video">
+            <span class="nav-tab-icon">🎬</span>Video
+          </button>
+          <button class="nav-tab" data-tab="settings">
+            <span class="nav-tab-icon">⚙️</span>Settings
+          </button>
+        </nav>
+      </div>
+      <div class="nav-right">
+        <button id="searchBtn" class="search-trigger" title="Search (⌘K)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <span>Search</span>
+          <kbd>⌘K</kbd>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Generate Tab -->
+      <section id="tab-generate" class="tab-content active">
+        <div class="tab-header">
+          <h1>Generate Image</h1>
+          <p class="tab-subtitle">Create stunning images from text descriptions using AI</p>
+        </div>
+        <div class="generate-layout">
+          <div class="panel panel-input">
+            <div class="field">
+              <label for="genPrompt">Prompt</label>
+              <textarea id="genPrompt" class="input mono" rows="4" placeholder="A futuristic cityscape at sunset, cyberpunk style, neon lights reflecting off wet streets…"></textarea>
+            </div>
+            <div class="field">
+              <label for="genNegative">Negative Prompt <span class="label-optional">(optional)</span></label>
+              <textarea id="genNegative" class="input mono" rows="2" placeholder="blurry, low quality, distorted…"></textarea>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="genWidth">Width</label>
+                <select id="genWidth" class="input">
+                  <option value="512">512</option>
+                  <option value="768">768</option>
+                  <option value="1024" selected>1024</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="genHeight">Height</label>
+                <select id="genHeight" class="input">
+                  <option value="512">512</option>
+                  <option value="768">768</option>
+                  <option value="1024" selected>1024</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="genSteps">Steps</label>
+                <input id="genSteps" type="number" class="input" value="30" min="1" max="150">
+              </div>
+              <div class="field">
+                <label for="genCfg">CFG Scale</label>
+                <input id="genCfg" type="number" class="input" value="7.5" min="1" max="30" step="0.5">
+              </div>
+            </div>
+            <div class="field">
+              <label for="genSeed">Seed <span class="label-optional">(-1 for random)</span></label>
+              <input id="genSeed" type="number" class="input mono" value="-1">
+            </div>
+            <button id="genBtn" class="btn btn-primary">
+              <span class="btn-text">Generate</span>
+              <span class="btn-loading hidden">
+                <span class="spinner"></span>Generating…
+              </span>
+            </button>
+          </div>
+          <div class="panel panel-preview">
+            <div id="genPreview" class="preview-area">
+              <div class="preview-placeholder">
+                <div class="preview-placeholder-icon">🖼️</div>
+                <p>Your generated image will appear here</p>
+              </div>
+            </div>
+            <div id="genMeta" class="preview-meta hidden"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Edit Tab -->
+      <section id="tab-edit" class="tab-content">
+        <div class="tab-header">
+          <h1>Edit Image</h1>
+          <p class="tab-subtitle">Upload an image and modify it with AI-powered editing</p>
+        </div>
+        <div class="edit-layout">
+          <div class="panel panel-input">
+            <div class="field">
+              <label>Source Image</label>
+              <div id="editDropzone" class="dropzone">
+                <input type="file" id="editFileInput" accept="image/*" class="sr-only">
+                <div class="dropzone-content">
+                  <div class="dropzone-icon">📁</div>
+                  <p>Drop image here or <span class="dropzone-browse">browse</span></p>
+                  <span class="dropzone-hint">PNG, JPG, WEBP up to 20MB</span>
+                </div>
+                <div id="editThumb" class="dropzone-thumb hidden"></div>
+              </div>
+            </div>
+            <div class="field">
+              <label for="editPrompt">Edit Instruction</label>
+              <textarea id="editPrompt" class="input mono" rows="3" placeholder="Change the background to a beach scene…"></textarea>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="editStrength">Strength</label>
+                <input id="editStrength" type="range" class="range" min="0.1" max="1" step="0.05" value="0.75">
+                <span id="editStrengthVal" class="range-val">0.75</span>
+              </div>
+              <div class="field">
+                <label for="editSteps">Steps</label>
+                <input id="editSteps" type="number" class="input" value="30" min="1" max="150">
+              </div>
+            </div>
+            <button id="editBtn" class="btn btn-primary" disabled>
+              <span class="btn-text">Edit Image</span>
+              <span class="btn-loading hidden">
+                <span class="spinner"></span>Editing…
+              </span>
+            </button>
+          </div>
+          <div class="panel panel-preview">
+            <div id="editPreview" class="preview-area">
+              <div class="preview-placeholder">
+                <div class="preview-placeholder-icon">🖌️</div>
+                <p>Edited result will appear here</p>
+              </div>
+            </div>
+            <div id="editMeta" class="preview-meta hidden"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Video Tab -->
+      <section id="tab-video" class="tab-content">
+        <div class="tab-header">
+          <h1>Generate Video</h1>
+          <p class="tab-subtitle">Create short video clips from text or images</p>
+        </div>
+        <div class="generate-layout">
+          <div class="panel panel-input">
+            <div class="field">
+              <label for="videoPrompt">Prompt</label>
+              <textarea id="videoPrompt" class="input mono" rows="4" placeholder="A drone shot flying over a misty mountain range at dawn…"></textarea>
+            </div>
+            <div class="field">
+              <label>Source Image <span class="label-optional">(optional — for image-to-video)</span></label>
+              <div id="videoDropzone" class="dropzone dropzone-sm">
+                <input type="file" id="videoFileInput" accept="image/*" class="sr-only">
+                <div class="dropzone-content">
+                  <div class="dropzone-icon">📁</div>
+                  <p>Drop image or <span class="dropzone-browse">browse</span></p>
+                </div>
+                <div id="videoThumb" class="dropzone-thumb hidden"></div>
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="videoFrames">Frames</label>
+                <input id="videoFrames" type="number" class="input" value="16" min="8" max="64">
+              </div>
+              <div class="field">
+                <label for="videoFps">FPS</label>
+                <input id="videoFps" type="number" class="input" value="8" min="1" max="30">
+              </div>
+              <div class="field">
+                <label for="videoSteps">Steps</label>
+                <input id="videoSteps" type="number" class="input" value="25" min="1" max="100">
+              </div>
+            </div>
+            <button id="videoBtn" class="btn btn-primary">
+              <span class="btn-text">Generate Video</span>
+              <span class="btn-loading hidden">
+                <span class="spinner"></span>Generating…
+              </span>
+            </button>
+          </div>
+          <div class="panel panel-preview">
+            <div id="videoPreview" class="preview-area">
+              <div class="preview-placeholder">
+                <div class="preview-placeholder-icon">🎬</div>
+                <p>Your video will appear here</p>
+              </div>
+            </div>
+            <div id="videoMeta" class="preview-meta hidden"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Settings Tab -->
+      <section id="tab-settings" class="tab-content">
+        <div class="tab-header">
+          <h1>Settings</h1>
+          <p class="tab-subtitle">Configure Lance backend connection and preferences</p>
+        </div>
+        <div class="settings-grid">
+          <div class="panel settings-card">
+            <h3>Backend Connection</h3>
+            <div class="field">
+              <label for="setApiUrl">API URL</label>
+              <input id="setApiUrl" type="text" class="input mono" value="http://localhost:8000" placeholder="http://localhost:8000">
+            </div>
+            <div class="field">
+              <label for="setApiKey">API Key <span class="label-optional">(if required)</span></label>
+              <input id="setApiKey" type="password" class="input mono" placeholder="sk-…">
+            </div>
+            <button id="setTestBtn" class="btn btn-secondary">Test Connection</button>
+          </div>
+          <div class="panel settings-card">
+            <h3>Defaults</h3>
+            <div class="field">
+              <label for="setModel">Default Model</label>
+              <select id="setModel" class="input">
+                <option value="sdxl">Stable Diffusion XL</option>
+                <option value="sd15">Stable Diffusion 1.5</option>
+                <option value="flux">FLUX</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="setSampler">Default Sampler</label>
+              <select id="setSampler" class="input">
+                <option value="euler_a">Euler A</option>
+                <option value="dpm++_2m">DPM++ 2M</option>
+                <option value="dpm++_sde">DPM++ SDE</option>
+              </select>
+            </div>
+          </div>
+          <div class="panel settings-card">
+            <h3>Storage</h3>
+            <p class="settings-desc">Generated outputs are saved locally.</p>
+            <button id="setClearBtn" class="btn btn-danger">Clear Output Cache</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script src="js/generate.js"></script>
+  <script src="js/edit.js"></script>
+  <script src="js/video.js"></script>
+</body>
+</html>
