@@ -13,7 +13,7 @@ Lance 多模态模型的 Web 界面，支持图像生成、图像编辑、视频
 
 ```bash
 # 克隆项目
-git clone https://github.com/NousResearch/lance-webui.git
+git clone https://github.com/Liuxd-1230/lance-webui.git
 cd lance-webui
 
 # 创建虚拟环境
