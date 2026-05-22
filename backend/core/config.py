@@ -12,9 +12,10 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "info"
     CORS_ORIGINS: list[str] = ["*"]
 
-    class Config:
-        env_file = ".env"
-        env_prefix = "LANCE_"
+    model_config = {
+        "env_file": ".env",
+        "env_prefix": "LANCE_",
+    }
 
 
 settings = Settings()

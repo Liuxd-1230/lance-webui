@@ -20,14 +20,15 @@
       return;
     }
 
+    const seedVal = parseInt(document.getElementById('genSeed').value);
     const payload = {
       prompt,
       negative_prompt: document.getElementById('genNegative').value.trim(),
       width: parseInt(document.getElementById('genWidth').value),
       height: parseInt(document.getElementById('genHeight').value),
-      steps: parseInt(document.getElementById('genSteps').value),
-      cfg_scale: parseFloat(document.getElementById('genCfg').value),
-      seed: parseInt(document.getElementById('genSeed').value),
+      num_inference_steps: parseInt(document.getElementById('genSteps').value),
+      guidance_scale: parseFloat(document.getElementById('genCfg').value),
+      seed: isNaN(seedVal) || seedVal < 0 ? null : seedVal,
     };
 
     setButtonLoading('genBtn', true);
@@ -42,18 +43,15 @@
 
       const data = await res.json();
 
-      if (data.image_url || data.image_base64) {
-        const src = data.image_url
-          ? LanceApp.apiUrl + data.image_url
-          : `data:image/png;base64,${data.image_base64}`;
+      if (data.images && data.images.length > 0) {
+        const src = `data:image/png;base64,${data.images[0]}`;
 
         preview.innerHTML = `<img src="${src}" alt="Generated image">`;
 
         meta.classList.remove('hidden');
-        const elapsed = data.elapsed ? `${data.elapsed.toFixed(1)}s` : '—';
-        const seed = data.seed ?? payload.seed;
+        const elapsed = data.processing_time ? `${data.processing_time.toFixed(1)}s` : '—';
         meta.innerHTML = `
-          <span>Seed: ${seed}</span>
+          <span>Seed: ${data.seed ?? '—'}</span>
           <span>Time: ${elapsed}</span>
           <span>Size: ${payload.width}×${payload.height}</span>
         `;
@@ -80,9 +78,8 @@
         const res = await apiCall(`/api/tasks/${taskId}`);
         const data = await res.json();
         if (data.status === 'completed' || data.status === 'done') {
-          const src = data.image_url
-            ? LanceApp.apiUrl + data.image_url
-            : `data:image/png;base64,${data.image_base64}`;
+          const img = data.images ? data.images[0] : data.image_base64;
+          const src = `data:image/png;base64,${img}`;
           preview.innerHTML = `<img src="${src}" alt="Generated image">`;
           meta.classList.remove('hidden');
           meta.innerHTML = `<span>Seed: ${data.seed ?? '—'}</span><span>Task: ${taskId}</span>`;

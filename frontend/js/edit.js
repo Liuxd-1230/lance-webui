@@ -15,6 +15,15 @@
 
   let sourceFile = null;
 
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
   // Setup dropzone
   setupDropzone('editDropzone', 'editFileInput', 'editThumb', (file) => {
     sourceFile = file;
@@ -43,28 +52,31 @@
     showSkeleton();
 
     try {
-      const form = new FormData();
-      form.append('image', sourceFile);
-      form.append('prompt', prompt);
-      form.append('strength', strengthSlider.value);
-      form.append('steps', document.getElementById('editSteps').value);
+      // Convert image to base64
+      const image_base64 = await fileToBase64(sourceFile);
+
+      const payload = {
+        image_base64,
+        prompt,
+        strength: parseFloat(strengthSlider.value),
+        num_inference_steps: parseInt(document.getElementById('editSteps').value),
+      };
 
       const res = await apiCall('/api/edit', {
         method: 'POST',
-        body: form,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
 
-      if (data.image_url || data.image_base64) {
-        const src = data.image_url
-          ? LanceApp.apiUrl + data.image_url
-          : `data:image/png;base64,${data.image_base64}`;
+      if (data.images && data.images.length > 0) {
+        const src = `data:image/png;base64,${data.images[0]}`;
 
         preview.innerHTML = `<img src="${src}" alt="Edited image">`;
 
         meta.classList.remove('hidden');
-        const elapsed = data.elapsed ? `${data.elapsed.toFixed(1)}s` : '—';
+        const elapsed = data.processing_time ? `${data.processing_time.toFixed(1)}s` : '—';
         meta.innerHTML = `
           <span>Strength: ${strengthSlider.value}</span>
           <span>Time: ${elapsed}</span>
@@ -91,9 +103,8 @@
         const res = await apiCall(`/api/tasks/${taskId}`);
         const data = await res.json();
         if (data.status === 'completed' || data.status === 'done') {
-          const src = data.image_url
-            ? LanceApp.apiUrl + data.image_url
-            : `data:image/png;base64,${data.image_base64}`;
+          const img = data.images ? data.images[0] : data.image_base64;
+          const src = `data:image/png;base64,${img}`;
           preview.innerHTML = `<img src="${src}" alt="Edited image">`;
           meta.classList.remove('hidden');
           meta.innerHTML = `<span>Task: ${taskId}</span>`;

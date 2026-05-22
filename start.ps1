@@ -91,20 +91,28 @@ $listenHost = if ($env:LANCE_HOST) { $env:LANCE_HOST } else { "0.0.0.0" }
 $port       = if ($env:LANCE_PORT) { [int]$env:LANCE_PORT } else { 8000 }
 
 # -- 端口占用检测 --
-$occupied = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
-if ($occupied) {
-    $opid  = $occupied[0].OwningProcess
-    $proc  = Get-Process -Id $opid -ErrorAction SilentlyContinue
-    Write-Host "[WARN] 端口 $port 已被占用 (PID: $opid $($proc.ProcessName))" -ForegroundColor DarkYellow
-    $kill = Read-Host "是否终止该进程? (y/N)"
-    if ($kill -eq "y" -or $kill -eq "Y") {
-        Stop-Process -Id $opid -Force
-        Start-Sleep -Seconds 1
-        Write-Host "[INFO] 已终止进程 $opid" -ForegroundColor Green
-    } else {
-        Write-Host "[INFO] 请手动释放端口或设置 LANCE_PORT 环境变量" -ForegroundColor Yellow
-        Read-Host "按回车退出"
-        exit 1
+try {
+    $occupied = Get-NetTCPConnection -LocalPort $port -ErrorAction Stop
+    if ($occupied) {
+        $opid  = $occupied[0].OwningProcess
+        $proc  = Get-Process -Id $opid -ErrorAction SilentlyContinue
+        Write-Host "[WARN] 端口 $port 已被占用 (PID: $opid $($proc.ProcessName))" -ForegroundColor DarkYellow
+        $kill = Read-Host "是否终止该进程? (y/N)"
+        if ($kill -eq "y" -or $kill -eq "Y") {
+            Stop-Process -Id $opid -Force
+            Start-Sleep -Seconds 1
+            Write-Host "[INFO] 已终止进程 $opid" -ForegroundColor Green
+        } else {
+            Write-Host "[INFO] 请手动释放端口或设置 LANCE_PORT 环境变量" -ForegroundColor Yellow
+            Read-Host "按回车退出"
+            exit 1
+        }
+    }
+} catch {
+    # Get-NetTCPConnection 不可用时用 netstat 回退
+    $netstat = netstat -ano 2>$null | Select-String ":${port}\s"
+    if ($netstat) {
+        Write-Host "[WARN] 端口 $port 可能已被占用" -ForegroundColor DarkYellow
     }
 }
 

@@ -209,7 +209,7 @@
 
   document.getElementById('setTestBtn')?.addEventListener('click', async () => {
     try {
-      await apiCall('/health');
+      await apiCall('/api/status');
       showToast('Connection successful!', 'success');
     } catch {
       // toast already shown in apiCall

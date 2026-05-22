@@ -13,6 +13,15 @@
 
   let sourceFile = null;
 
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
   // Setup dropzone
   setupDropzone('videoDropzone', 'videoFileInput', 'videoThumb', (file) => {
     sourceFile = file;
@@ -35,36 +44,27 @@
     showSkeleton();
 
     try {
-      let res;
+      let payload = {
+        prompt,
+        num_frames: frames,
+        fps,
+        num_inference_steps: steps,
+      };
 
       if (sourceFile) {
-        // Image-to-video
-        const form = new FormData();
-        form.append('image', sourceFile);
-        form.append('prompt', prompt);
-        form.append('frames', frames);
-        form.append('fps', fps);
-        form.append('steps', steps);
-
-        res = await apiCall('/api/video', {
-          method: 'POST',
-          body: form,
-        });
-      } else {
-        // Text-to-video
-        res = await apiCall('/api/video', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt, frames, fps, steps }),
-        });
+        payload.image_base64 = await fileToBase64(sourceFile);
       }
+
+      const res = await apiCall('/api/video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
       const data = await res.json();
 
-      if (data.video_url || data.video_base64) {
-        const src = data.video_url
-          ? LanceApp.apiUrl + data.video_url
-          : `data:video/mp4;base64,${data.video_base64}`;
+      if (data.video_base64) {
+        const src = `data:video/mp4;base64,${data.video_base64}`;
 
         preview.innerHTML = `<video src="${src}" controls autoplay loop style="max-width:100%;max-height:480px;border-radius:var(--radius-sm);"></video>`;
 
@@ -99,9 +99,7 @@
         const data = await res.json();
 
         if (data.status === 'completed' || data.status === 'done') {
-          const src = data.video_url
-            ? LanceApp.apiUrl + data.video_url
-            : `data:video/mp4;base64,${data.video_base64}`;
+          const src = `data:video/mp4;base64,${data.video_base64}`;
 
           preview.innerHTML = `<video src="${src}" controls autoplay loop style="max-width:100%;max-height:480px;border-radius:var(--radius-sm);"></video>`;
 
