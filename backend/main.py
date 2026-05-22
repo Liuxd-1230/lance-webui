@@ -35,8 +35,9 @@ if frontend_dir.is_dir():
 
 @app.on_event("startup")
 async def startup():
+    from backend.core.inference import get_inference_engine
     logger.info(f"启动 Lance WebUI on {settings.HOST}:{settings.PORT}")
-    engine = __import__("backend.core.inference", fromlist=["get_inference_engine"]).get_inference_engine()
+    engine = get_inference_engine()
     engine.load_model()
 
 

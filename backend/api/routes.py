@@ -3,7 +3,7 @@ import logging
 
 from fastapi import APIRouter, HTTPException
 
-from backend.models.schemas import (
+from backend.schemas import (
     GenerateRequest,
     EditRequest,
     VideoRequest,
